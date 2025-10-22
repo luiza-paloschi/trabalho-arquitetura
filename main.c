@@ -426,7 +426,8 @@ void mostrar_compra(registro_compra compra) {
 //utilizados como identificadores únicos em aplicações como twitter e discord
 uint64_t gerar_id_joia() {
     const uint64_t EPOCH = 1130976092045ULL; // 2005-11-03 00:01:32 UTC
-    static uint64_t ultimo_id = 0;
+    static uint64_t ultimo_timestamp = 0;
+    static uint64_t contador = 0;
 
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -434,13 +435,15 @@ uint64_t gerar_id_joia() {
     uint64_t now_ms = (uint64_t)tv.tv_sec * 1000ULL + tv.tv_usec / 1000ULL;
     uint64_t timestamp = now_ms - EPOCH;
 
-    uint64_t id = (timestamp << 22);
-
-    if (id <= ultimo_id) {
-        id = ultimo_id + 1;
+    if (timestamp == ultimo_timestamp) {
+        contador++;
+    } else {
+        contador = 0;
+        ultimo_timestamp = timestamp;
     }
 
-    ultimo_id = id;
+    uint64_t id = (timestamp << 22) | (contador & ((1ULL << 22) - 1));
+
     return id;
 }
 ///////////////////////////////////////////////////////////
@@ -977,11 +980,7 @@ int inserir_joia(indice_joias *indice){
 
     nova_joia.excluido = 0;
 
-    long posicao_insercao = sizeof(header_joias) +
-                           (header.num_registros * sizeof(registro_joia));
-    printf("%l", posicao_insercao);
-
-    fseek(arq_joias, posicao_insercao, SEEK_SET);
+    fseek(arq_joias, 0, SEEK_END);
     fwrite(&nova_joia, sizeof(registro_joia), 1, arq_joias);
 
     header.num_registros++;
@@ -993,6 +992,8 @@ int inserir_joia(indice_joias *indice){
     printf("Joia inserida com sucesso! ID: %llu\n", nova_joia.id);
     printf("Inserções desde última reorganização: %d/%d\n",
            header.num_insercoes, MAX_INSERCOES);
+
+    fclose(arq_joias);
 
     if (header.num_insercoes >= MAX_INSERCOES) {
         liberar_indice_joias(indice);
@@ -1009,7 +1010,6 @@ int inserir_joia(indice_joias *indice){
         }
     }
 
-    fclose(arq_joias);
     return 1;
 }
 ////////////////////////////////////////////////////
@@ -1247,7 +1247,7 @@ int main() {
         criar_indice_compras(&idx_compras);
     }
 
-    //inserir_varias_joias();
+    inserir_varias_joias();
 
     menu_principal(&idx_joias, &idx_compras);
     salvar_indices(&idx_joias, &idx_compras);
