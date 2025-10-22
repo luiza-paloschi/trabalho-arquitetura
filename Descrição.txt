@@ -1,0 +1,106 @@
+Descrição dos Arquivos de Dados e Arquivos de Índice
+O dataset fornecido está organizado em dois arquivos principais de dados: arquivo de compras e arquivo de joias. Cada um desses arquivos possui um respectivo arquivo de índice.
+
+1. Arquivo de Compras
+Este arquivo armazena informações detalhadas sobre cada item comprado. Cada linha representa um produto individual dentro de uma compra, ou seja, se uma compra contém múltiplos produtos, haverá uma linha para cada produto.
+Campos armazenados:
+id: identificador da compra
+
+
+id_produto: identificador do produto comprado
+
+
+quantidade: quantidade do produto na compra
+
+
+data_hora: data e hora da compra
+
+
+id_usuario: identificador do usuário que realizou a compra
+
+
+Estrutura utilizada:
+typedef struct registroCompra {
+    uint64_t id;              
+    uint64_t id_produto;      
+    int quantidade;            
+    char data_hora[24];       
+    uint64_t id_usuario;       
+} registro_compra;
+
+Chave de ordenação:
+ As entradas são ordenadas pela combinação de id da compra e id_produto.
+
+Arquivo de Índice das Compras
+O índice é parcial, ou seja, não armazena todas as entradas do arquivo de dados, mas apenas o primeiro registro de cada bloco de compras. Cada entrada contém:
+id_pedido: identificador da compra
+
+
+id_produto: identificador do produto
+
+
+posicao:deslocamento (em bytes) do primeiro registro do bloco no arquivo de dados
+
+
+Estrutura utilizada:
+typedef struct entrada_indice_compra {
+    uint64_t id_pedido;      
+    uint64_t id_produto;      
+    long posicao;         
+} entrada_indice_compra;
+
+
+2. Arquivo de Joias
+Este arquivo contém informações detalhadas sobre cada joia disponível no sistema.
+Campos armazenados:
+id: identificador do produto (joia)
+
+
+id_marca: identificador da marca
+
+
+preco: preço da joia
+
+
+genero: público-alvo (ex: masculino, feminino, unissex)
+
+
+cor_principal: cor predominante da joia
+
+
+metal_principal: material metálico predominante
+
+
+joia_principal: tipo principal da joia (ex: anel, colar)
+
+
+excluido: flag que indica se o registro foi excluído logicamente
+
+
+Estrutura utilizada:
+typedef struct registroJoia {
+    uint64_t id;                
+    int id_marca;               
+    float preco;                
+    char genero;                
+    char cor_principal[10];      
+    char metal_principal[10];   
+    char joia_principal[10];     
+    short excluido;              
+} registro_joia;
+
+
+Arquivo de Índice das Joias
+Este arquivo de índice permite acesso eficiente aos registros do arquivo de joias, utilizando o id da joia como chave de busca. Assim como no caso das compras, este também é um índice parcial, contendo apenas os registros correspondentes ao início dos blocos de registros.
+Campos:
+chave: identificador do produto (mesmo que o id da joia)
+
+
+posicao: deslocamento (em bytes) do registro correspondente no arquivo de dados
+
+
+Estrutura utilizada:
+typedef struct entrada_indice_joia {
+    uint64_t chave;    
+    long posicao;      
+} entrada_indice_joia;
